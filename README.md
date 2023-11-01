@@ -8,3 +8,5 @@
 - cargo install cargo-audit
 - cargo install --version="~0.7" sqlx-cli --no-default-features --features rustls,postgres
 - sudo apt-get install postgresql-client
+- config = "0.13"
+
