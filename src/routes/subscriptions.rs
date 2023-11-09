@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
-use sqlx::PgConnection;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -9,11 +9,8 @@ pub struct FormData {
     name: String,
 }
 
-pub async fn subscribe(
-    _form: web::Form<FormData>,
-    _connection: web::Data<PgConnection>,
-) -> HttpResponse {
-    sqlx::query!(
+pub async fn subscribe(_form: web::Form<FormData>, _pool: web::Data<PgPool>) -> HttpResponse {
+    match sqlx::query!(
         r#"
         insert into subscriptions (id, email, name, subscribed_at)
         values ($1, $2, $3, $4)
@@ -23,9 +20,15 @@ pub async fn subscribe(
         _form.name,
         Utc::now()
     )
-    // We use `get_ref` to get an immutable reference to the `PgConnection`
+    // We use `get_ref` to get an immutable reference to the `PgPool`
     //  wrapped by `web::Data`.
-    .execute(_connection.get_ref())
-    .await;
-    HttpResponse::Ok().finish()
+    .execute(_pool.get_ref())
+    .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => {
+            println!("Failed to execute query: {}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
 }
