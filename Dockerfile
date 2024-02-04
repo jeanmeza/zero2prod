@@ -1,11 +1,26 @@
-# Builder stage
-FROM rust:1.75.0 as builder
-
+# Prepare
+FROM lukemathwalker/cargo-chef:latest-rust-1.75.0 as chef
 WORKDIR /app
 RUN apt update && apt install lld clang -y
+
+# Cook
+FROM chef as planner
+COPY . .
+# Compute a lock-like file for our project'
+RUN cargo chef prepare --recipe-path recipe.json
+
+
+# Builder stage
+FROM chef as builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build our project dependencies, not our application!
+RUN cargo chef cook --release --recipe-path recipe.json
+# At this point if our dependency tree stays the same,
+# all layers should be cached.
 COPY . .
 ENV SQLX_OFFLINE true
-RUN cargo build --release
+# Build our project
+RUN cargo build --release --bin zero2prod
 
 # Runtime stage
 # FROM rust:1.75.0-slim as runtime
