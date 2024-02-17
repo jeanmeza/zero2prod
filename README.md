@@ -1,5 +1,12 @@
 # Zero to Production in Rust
 
+## Buld Docker Image
+
+```bash
+cargo sqlx prepare --workspace
+docker build --tag zero2prod --file Dockerfile .
+```
+
 ## Packages to install
 
 - cargo install cargo-watch
