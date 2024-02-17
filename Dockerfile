@@ -1,5 +1,5 @@
 # Prepare
-FROM lukemathwalker/cargo-chef:latest-rust-1.75.0 as chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.76.0 as chef
 WORKDIR /app
 RUN apt update && apt install lld clang -y
 
@@ -8,7 +8,6 @@ FROM chef as planner
 COPY . .
 # Compute a lock-like file for our project'
 RUN cargo chef prepare --recipe-path recipe.json
-
 
 # Builder stage
 FROM chef as builder
@@ -28,7 +27,6 @@ RUN cargo build --release --bin zero2prod
 # needed to RUN our binary.
 # Use the bare operating system as base image for our runtime stage.
 FROM debian:bookworm-slim as runtime
-
 WORKDIR /app
 # Install OpenSSL - it is tynamically liked by some of our dependencies
 # Install ca-certificates - it is needed to verify TLS certificates 
