@@ -3,7 +3,7 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::{NewSubscriber, SubscriberName};
+use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -22,10 +22,17 @@ pub struct FormData {
 pub async fn subscribe(_form: web::Form<FormData>, _pool: web::Data<PgPool>) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
-    let new_subscriber = NewSubscriber {
-        email: _form.0.email,
-        name: SubscriberName::parse(_form.0.name).expect("Name validation faildes."),
+    let name = match SubscriberName::parse(_form.0.name) {
+        Ok(name) => name,
+        // Return early if  the name is invalid, with a 400
+        Err(_) => return HttpResponse::BadRequest().finish(),
     };
+    let email = match SubscriberEmail::parse(_form.0.email) {
+        Ok(email) => email,
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
+
+    let new_subscriber = NewSubscriber { email, name };
     match insert_subscriber(&new_subscriber, &_pool).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
@@ -46,7 +53,7 @@ pub async fn insert_subscriber(
         values ($1, $2, $3, $4)
         "#,
         Uuid::new_v4(),
-        new_subscriber.email,
+        new_subscriber.email.as_ref(),
         new_subscriber.name.as_ref(),
         Utc::now()
     )

@@ -27,6 +27,13 @@ tracing-log = "0.2"
 secrecy = { version = "0.8", features = ["serde"] }
 tracing-actix-web = "0.7"
 unicode-segmentation = "1"
+claims = "0.7"
+validator = { version = "0.16" }
+# We are not using fake >= 2.4 because it relies on rand 0.8 which has been recently released and
+# it is not yet used by quickcheck (solved in its upcoming 1.0 release)
+fake = "~2.3"
+quickcheck = "0.9.2"
+quickcheck_macros = "0.9.1"
 
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
